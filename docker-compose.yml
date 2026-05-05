@@ -5,8 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: taskbackend
-    container_name: taskbackend
+    image: flowapp:dev
     env_file:
       - .env.docker
     ports: 
@@ -15,7 +14,6 @@ services:
      - db
   db: 
     image: postgres:latest
-    container_name: taskpostgres
     env_file: 
       - .env.docker
     ports:
