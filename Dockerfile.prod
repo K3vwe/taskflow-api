@@ -23,16 +23,13 @@ WORKDIR /build
 # Install build time dependencies packages
 RUN apt-get update &&  apt-get install -y --no-install-recommends \
     libffi-dev \
-    make \
-    gcc \
-    g++ \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
 
-RUN pip install --no-cache-dir --upgrade pip wheel && \
-    pip wheel --no-cache-dir --wheel-dir /wheels -r requirements.txt
+RUN python -m pip install --no-cache-dir --upgrade pip wheel && \
+    python -m pip wheel --no-cache-dir --wheel-dir /wheels -r requirements.txt
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -43,6 +40,11 @@ FROM python:${PYTHON_VERSION} AS runtime
 
 ARG UID=1001
 ARG GID=1001
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1
 
 WORKDIR /app
 
@@ -58,8 +60,10 @@ RUN groupadd -r -g ${GID} backend && useradd -r -u ${UID} -g backend -m -s /bin/
 
 # ──────────────────────── Application source ───────────────────────────────────
 COPY --chown=backend:backend --from=builder /wheels /wheels
+
 # Install packages 
 RUN pip install --no-index --no-cache-dir /wheels/*
+RUN rm -rf /wheels
 
 COPY --chown=backend:backend app /app/app
 COPY --chown=backend:backend alembic /app/alembic
